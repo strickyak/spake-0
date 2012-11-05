@@ -1,0 +1,5 @@
+package duck
+
+#define A interface{}
+
+const DUCK = 23

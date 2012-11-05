@@ -1,0 +1,26 @@
+Define a class wiki server extending server.
+
+Remark I wish I were Oscar Meyer wiener. That is what I really want to be.
+Define a method wiki read action, taking W.
+Push string literal empty.
+Push literal word wiki.
+Push argument whiskey.
+Local kilo becomes string join, topple popping too, literal character/.
+Local Delta becomes database lookup, field Delta, local bravo, local kilo.
+Local Romeo becomes regular compile expression one.
+
+Forever do:
+local Mike becomes regular match Romeo, local Delta.
+Local Zulu becomes string empty.
+If local Mike:
+local Alpha, local bravo, local Charlie becomes regular groups local Mike.
+Push call wiki word to HTML, myself, local bravo.
+Push HTML escape, Charlie.
+Push local Zulu.
+Local Zulu becomes string can cat, topple popping three.
+Local Delta becomes local Alpha.
+Finish if.
+Finish forever.
+Finish method.
+
+Finish class.

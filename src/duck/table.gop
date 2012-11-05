@@ -1,0 +1,36 @@
+package duck
+
+#define A interface{}
+
+type Table struct {
+	Object
+	m	map[A]A
+}
+
+func NewTable() *Table {
+	z := &Table{
+		m:	make(map[A]A),
+	}
+	z.self = z
+	return z
+}
+
+func (p *Table) Len() int {
+	return len(p.m)
+}
+
+func (p *Table) At(i A) A {
+	return p.m[i]
+}
+
+func (p *Table) AtPut(i A, x A) {
+	p.m[i] = x
+}
+
+func (p *Table) Keys() *Vector {
+	z := NewVector()
+	for k, _ := range p.m {
+		z.Append(k)
+	}
+	return z
+}

@@ -1,0 +1,38 @@
+package duck
+
+#define A interface{}
+
+type Vector struct {
+	Object
+	v	[]A
+}
+
+func NewVector() *Vector {
+	z := &Vector{
+		v:	new([8]A)[0:0],
+	}
+	z.self = z
+	return z
+}
+
+func (p *Vector) Len() int {
+	return len(p.v)
+}
+
+func (p *Vector) At(i int) A {
+	if i < 0 {
+		return p.v[i+len(p.v)]
+	}
+	return p.v[i]
+}
+
+func (p *Vector) AtPut(i int, x A) {
+	if i < 0 {
+		p.v[i+len(p.v)] = x
+	}
+	p.v[i] = x
+}
+
+func (p *Vector) Append(x A) {
+	p.v = append(p.v, x)
+}
