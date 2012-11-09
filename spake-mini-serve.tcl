@@ -20,24 +20,64 @@
 
 source crpl4.tcl
 
-proc HANDLE/foo {w} {
+proc ParseQuery {query dictName} {
+  upvar 1 $dictName dict
+  set dict(?) ?
+  foreach part [split $query &] {
+    if [regexp {^(\w+)[=](.*)$} $part _ k v] {
+      set dict($k) $v
+    }
+  }
+  parray dict
+}
+
+proc HANDLE/foo {sock} {
   return "<html>Foo Handler. <br>Hello. &amp;</html>"
 }
 
-proc HANDLE/cls p {
+proc HANDLE/cls sock {
   set z "<ul>\n"
   global M
-  foreach k [array names M] {
-    switch -glob $k {
-      cls/* {
-        set kk [split $k /]
-        set c [1 $kk]
-	append z "<li> <a href=\"/cls/$c\">$c</a>\n"
-      }
-    }
+  foreach k [array names M cls/*] {
+    set kk [split $k /]
+    set c [1 $kk]
+    append z "<li> <a href=\"/edit.cls/$c\">$c</a>\n"
   }
   append z "</ul>\n"
   set z
+}
+
+proc HANDLE/edit.cls sock {
+  global M
+  upvar #0 Httpd$sock data
+  set pp [split $data(url) /]
+  set c [2 $pp]
+  ParseQuery $data(query) q
+  append M(cls/$c) ""
+
+  subst {
+    <h1>Edit Class $c</h1>
+    <form method=post action=/submit.cls/$c>
+      <textarea name=text>$M(cls/$c)</textarea>
+      <br>
+      <input type=submit>
+      <input type=reset>
+    </form>
+  }
+}
+
+proc HANDLE/submit.cls sock {
+  global M
+  upvar #0 Httpd$sock data
+  set pp [split $data(url) /]
+  set c [2 $pp]
+  ParseQuery $data(query) q
+  append M(cls/$c) ""
+
+  subst {
+    <h1>Submit Class $c</h1>
+    <pre>$q(text)</pre>
+  }
 }
 
 array set HttpdErrors {
@@ -116,9 +156,10 @@ proc HttpdRead { sock } {
     switch -- $state {
 	0,mime,GET	-
 	0,query,POST	{ HttpdRespond $sock }
-	//-1,query,POST	{ 
+	-1,query,POST	{ 
+	                   puts "STATE ============= $state"
 	                   HttpdRespond $sock }
-	0,mime,POST	{ set data(state) query }
+	0,mime,POST	{ set data(state) query ; HttpdRespond $sock }
 	1,mime,POST	-
 	1,mime,GET	{
 	    if [regexp {([^:]+):[ 	]*(.*)}  $line dummy key value] {
@@ -183,6 +224,7 @@ proc ShowQuery sock {
 proc HttpdRespond { sock } {
     global Httpd
     upvar #0 Httpd$sock data
+    parray data
 
     puts stderr "data(url) -> $data(url)"
 
@@ -197,10 +239,10 @@ proc HttpdRespond { sock } {
 	    #  return
 	    #}
 
-	    set cmd [lindex [split $data(url) /] 1]
+	    `set cmd [lindex [split $data(url) /] 1]
 	    puts DU---$data(url)
 	    puts CMD---$cmd
-	    HANDLE/$cmd $sock
+	    `HANDLE/$cmd $sock
 
     } what] {
 	puts $sock "HTTP/1.0 200 OKAY"
