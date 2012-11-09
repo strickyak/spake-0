@@ -18,6 +18,28 @@
 
 # HTTP/1.0 error codes (the ones we use)
 
+source crpl4.tcl
+
+proc HANDLE/foo {w} {
+  return "<html>Foo Handler. <br>Hello. &amp;</html>"
+}
+
+proc HANDLE/cls p {
+  set z "<ul>\n"
+  global M
+  foreach k [array names M] {
+    switch -glob $k {
+      cls/* {
+        set kk [split $k /]
+        set c [1 $kk]
+	append z "<li> <a href=\"/cls/$c\">$c</a>\n"
+      }
+    }
+  }
+  append z "</ul>\n"
+  set z
+}
+
 array set HttpdErrors {
     204 {No Content}
     400 {Bad Request}
@@ -164,14 +186,40 @@ proc HttpdRespond { sock } {
 
     puts stderr "data(url) -> $data(url)"
 
-    if {$data(url) == "/"} {
-      return [ShowQuery $sock]
-    }
+    if [catch {
 
-    if {$data(url) == "/favicon.ico"} {
-      close $sock
-      return
+	    if {$data(url) == "/"} {
+	      return [ShowQuery $sock]
+	    }
+
+	    #if {$data(url) == "/favicon.ico"} {
+	    #  HttpdSockDone  $sock
+	    #  return
+	    #}
+
+	    set cmd [lindex [split $data(url) /] 1]
+	    puts DU---$data(url)
+	    puts CMD---$cmd
+	    HANDLE/$cmd $sock
+
+    } what] {
+	puts $sock "HTTP/1.0 200 OKAY"
+	puts $sock "Content-Type: text/html"
+	puts $sock ""
+	puts $sock "<t1>ERROR: [Html $what]"
+	puts $sock "<pre>"
+	puts $sock "[Html $::errorInfo]"
+	puts $sock "</pre>"
+    } else {
+	puts $sock "HTTP/1.0 200 OKAY"
+	puts $sock "Content-Type: text/html"
+	puts $sock ""
+	puts $sock "$what"
     }
+    flush $sock
+    HttpdSockDone  $sock
+    return
+    -------------------------------------------
 
     set mypath [HttpdUrl2File $Httpd(root) $data(url)]
     puts stderr "mypath -> $mypath"
@@ -224,6 +272,14 @@ array set HttpdMimeType {
     .gif	image/gif
     .jpg	image/jpeg
     .xbm	image/x-xbitmap
+}
+
+proc Html s {
+  regsub -all {[&]} $s {\&amp;} s
+  regsub -all {[""]} $s {\&quot;} s
+  regsub -all {[<]} $s {\&lt;} s
+  regsub -all {[>]} $s {\&gt;} s
+  return $s
 }
 
 proc HttpdContentType {path} {
@@ -330,6 +386,9 @@ proc copychannel {in out {size 4096}} {
 }
 
 if 1 {
+array set M [read [open m.txt]]
+parray M
+
 Httpd_Server $env(HOME)/public_html [lindex $argv 0] index.html
 puts stderr "Starting Tcl httpd server on [info hostname] port 8080"
 vwait forever		;# start the Tcl event loop

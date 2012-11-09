@@ -1,0 +1,6 @@
+one uno
+two dos
+three tres
+cls/apple hey-apple
+cls/banana hey-banana
+cls/coconut hey-coconut

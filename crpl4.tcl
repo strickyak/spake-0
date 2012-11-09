@@ -1024,4 +1024,4 @@ proc DD {a k} {
 ##	}
 
 
-} ;# END $Header: /home/strick/github/spake-0/RCS/crpl4.tcl,v 1.1 2012/11/05 04:13:08 strick Exp strick $
+} ;# END $Header: /home/strick/github/spake-0/RCS/crpl4.tcl,v 1.1 2012/11/05 04:13:08 strick Exp $
