@@ -20,6 +20,24 @@
 
 source crpl4.tcl
 
+proc rest {name params body} {
+  `set front [`subst {
+    upvar 1 \$dict_name_ dict_
+    foreach p_ { $params } {
+      set \$p_ \[set dict_(\$p_)]
+    }
+  }]
+  proc HANDLE$name {path_ dict_name_} $front$body
+}
+
+rest /dunder {aaa bbb ccc} {
+  subst {
+    <h1>Dunder</h1>
+    <pre>aaa=$aaa --- bbb=$bbb --- ccc=$ccc</pre>
+  }
+  
+}
+
 proc ParseQuery {query dictName} {
   upvar 1 $dictName dict
   set dict(?) ?
@@ -123,21 +141,16 @@ proc HttpdAccept {newsock ipaddr port} {
     fileevent $newsock readable [list HttpdRead $newsock]
 }
 
-# read data from a client request
-
 proc HttpdRead { sock } {
     upvar #0 Httpd$sock data
 
-    if {[info exists data(state)] && $data(state) == "query"} {
-      set line [read $sock]
-      set readCount [string length $sock]
-    } else {
-      set readCount [gets $sock line]
-    }
-    puts stderr "LINE($readCount)$line"
+    set readCount [gets $sock line]
     if {![info exists data(state)]} {
 	if [regexp {(POST|GET) ([^?]+)\??([^ ]*) HTTP/1} \
 		$line x data(proto) data(url) data(query)] {
+	    puts stderr ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+	    puts stderr ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+	    puts stderr ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
 	    set data(state) mime
 	    Httpd_Log $sock Query $line
 	} else {
@@ -152,14 +165,30 @@ proc HttpdRead { sock } {
     # string compare $readCount 0 maps -1 to -1, 0 to 0, and > 0 to 1
 
     set state [string compare $readCount 0],$data(state),$data(proto)
-    puts stderr "STATE $state ($readCount)"
+    puts stderr ";;;; STATE $state ($readCount)"
     switch -- $state {
 	0,mime,GET	-
-	0,query,POST	{ HttpdRespond $sock }
+	0,query,POST	{
+	                   puts "{{{{ $line }}}}"
+	                   set data(query) $line
+	                   HttpdRespond $sock }
 	-1,query,POST	{ 
 	                   puts "STATE ============= $state"
+			   parray data
+	                   error BAIL
 	                   HttpdRespond $sock }
-	0,mime,POST	{ set data(state) query ; HttpdRespond $sock }
+	0,mime,POST	{ `set data(state) query 
+	                  ###
+			  `if { $data(mime,content-type) eq "application/x-www-form-urlencoded" } {
+			    `set n [get data(mime,content-length) 0]
+			    `if $n {
+			      `append data(query) "&" [`read $sock $n]
+	                      `HttpdRespond $sock
+	                      `return
+			    }
+			  }
+	                  ###
+	                  }
 	1,mime,POST	-
 	1,mime,GET	{
 	    if [regexp {([^:]+):[ 	]*(.*)}  $line dummy key value] {
@@ -425,6 +454,14 @@ proc bgerror {msg} {
 }
 proc copychannel {in out {size 4096}} {
   fcopy $in $out -size $size
+}
+proc get {name {default {}}} {
+  upvar 1 $name var
+  if {[info exists var]} {
+    return $var
+  } else {
+    return $default
+  }
 }
 
 if 1 {
