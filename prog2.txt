@@ -1,0 +1,53 @@
+
+define class stack:
+  field v
+
+  define constructor:
+    store v, new vector.
+    /
+
+  define method put, a:
+    call append, field v, local a.
+
+    myself.
+    /
+
+  define method take:
+    store local n, length, field v.
+
+    local n. number 1. Subtract.
+    call truncate, field v, pop.
+
+    myself.
+    /
+
+  define method length:
+    call length, field v.
+    /
+
+  define test 1:
+    store local s, new stack.
+
+    call length, local s.
+    assert, number 0.
+
+    call put, local s, number 23.
+    call put, local s, number 42.
+
+    call length, local s.
+    assert, number 2.
+
+    call take, local s.
+    assert, number 42.
+
+    call take, local s.
+    assert, number 23.
+
+    call length, local s.
+    assert, number 0.
+
+  /
+
+  
+    
+

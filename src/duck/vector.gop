@@ -36,3 +36,7 @@ func (p *Vector) AtPut(i int, x A) {
 func (p *Vector) Append(x A) {
 	p.v = append(p.v, x)
 }
+
+func (p *Vector) Truncate(n int) {
+	p.v = p.v[0 : n]
+}
